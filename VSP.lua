@@ -1,6 +1,27 @@
-vs_proto = Proto ("VSP","Protocol for Video-Star","Protocol for Video-Star Building Intercom Sysytem")
+--[[
+--复制模板	
+= {
+	Proto_name = "",
+	Protocol = Proto ("VSxxxx","Protocol for xxxx","Protocol for xxxx"),
+	Port = 
+}
+
+
+--]]
+
+
+-------------------------生产协议------------------------------------------
+Produce = {
+	Proto_name = "-Produce",
+	Protocol = Proto ("VSProduce","Protocol for Produce","Protocol for Produce"),
+	Port = 10000
+}
+
 local f_produce_cid = ProtoField.uint32("produce_cid","id号 ",base.DEC)
-local f_produce_cmd = ProtoField.uint8("produce_cmd","测试命令 ",base.DEC,{[0] = "TEST_CONNECT",				   	--进入/退出生产测试指令
+--出现参数1错误，不能直接使用cmd，估计是在UDP协议中已经使用了
+local f_produce_cmd = ProtoField.uint8("produce_cmd","测试命令 ",base.DEC,
+{
+	[0] = "TEST_CONNECT",				   	--进入/退出生产测试指令
 	[1] = "TEST_CONNECT_R",		       	--进入/退出生产测试应答指令
 	[2] = "TEST_HW_VERSION",			   	--PCB硬件版本配置指令
 	[3] = "TEST_HW_VERSION_R",           	--PCB硬件版本配置应答指令
@@ -25,19 +46,19 @@ local f_produce_cmd = ProtoField.uint8("produce_cmd","测试命令 ",base.DEC,{[
     [22] = "TEST_CUSTOM_INFO_R",          --请求自定义指令应答
     [23] = "TEST_CUSTOM_COMMON",          --执行自定义指令
     [24] = "TEST_CUSTOM_REPLY",           --执行自定义指令应答
-    [25] = "TEST_SET_COMMON_TIMEOUT",		--设置指令超时时间ca
+    [25] = "TEST_SET_COMMON_TIMEOUT",		--设置指令超时时间
 	})
 local f_produce_len = ProtoField.uint16("produce_len","命令长度",base.DEC)
 local f_produce_code = ProtoField.string("produce_Code","客户编号")
-vs_proto.fields = {f_produce_cid, f_produce_cmd, f_produce_len, f_produce_code}
---vs_proto.fields = {f_produce_cid, f_produce_len, f_produce_code}
+Produce.Protocol.fields = {f_produce_cid, f_produce_cmd, f_produce_len, f_produce_code}
 
-function vs_proto.dissector(buffer,pinfo,tree)
-    pinfo.cols.protocol:append("-VSP")
-    pinfo.cols.info:append(" This is a message of VSP")
+
+function Produce.Protocol.dissector(buffer,pinfo,tree)
+    pinfo.cols.protocol:append(Produce.Proto_name)
+    pinfo.cols.info:append(" VSP-Produce")
 
 	local buffer_len = buffer:len()
-	local VSPTree = tree:add(vs_proto, buffer(0, buffer_len), "Video-Star Protocol")
+	local VSPTree = tree:add(Produce.Protocol, buffer(0, buffer_len), "Produce Protocol")
 
 	local offset = 0
 
@@ -57,6 +78,113 @@ function vs_proto.dissector(buffer,pinfo,tree)
     return
 end
 
+-------------------------Talkback协议----------------------------------------
+Talkback = {
+	Communication = {
+		Proto_name = "-Communication",
+		Protocol = Proto ("VSCommunication","Protocol for Talkback-Communication","Protocol for GVS Talkback-Communication"),
+		Port = 8300
+	},
+	Audio = {
+		Proto_name = "-Audio",
+		Protocol = Proto ("VSAudio","Protocol for Talkback-Audio","Protocol for GVS Talkback-Audio"),
+		Port = 8302
+	},
+	Video = {
+		Proto_name = "-Video",
+		Protocol = Proto ("VSVideo","Protocol for Talkback-Video","Protocol for GVS Talkback-Video"),
+		Port = 8303
+	},
+	File = {
+		Proto_name = "-File",
+		Protocol = Proto ("VSFile","Protocol for Talkback-File","Protocol for GVS Talkback-File"),
+		Port = 8304
+	},
+	
+}
+COM = {
+	[0x0301] =  "呼叫指令",
+	[0x0302] =  "挂机指令",
+	[0x0303] =  "摘机指令",
+	[0x0304] =  "监视请求指令",
+	[0x0307] =  "户内寻呼(广播)",
+	[0x0308] =  "呼叫转移指令",
+	[0x0309] =  "留言同步指令",
+	[0x0310] =  "通话记录上报",
+	[0x0311] =  "抓拍图片上传指令",
+	[0x0381] =  "呼叫应答指令",
+	[0x0382] =  "挂机应答指令",
+	[0x0383] =  "摘机应答指令",
+	[0x0384] =  "监视应答指令",
+	[0x0388] =  "呼叫转移应答指令",
+	[0x0389] =  "留言同步应答指令",
+	[0x0390] =  "通话记录应答",
+	[0x0391] =  "抓拍图像上传应答指令",
+	[0x0350] =  "正忙",
+	[0x0351] =  "握手请求指令",
+	[0x0352] =  "握手应答指令",
+	[0x0353] =  "户内广播请求指令",
+	[0x0354] =  "户内广播应答指令",
+	[0x0355] =  "请求发送视频",
+	[0x0356] =  "倒计时同步请求",
+	[0x0357] =  "倒计时同步请求应答",
+	[0x0358] =  "呼叫拦截状态请求指令",
+	[0x0359] =  "呼叫拦截状态应答指令",
+	[0x035a] =  "呼叫拦截状态下的呼叫指令",
+	[0x035b] =  "呼叫拦截状态下的呼叫应答指令",
+	[0x035c] =  "呼叫挂起请求",
+	[0x035d] =  "呼叫挂起应答",
+	[0x035e] =  "呼叫恢复请求",
+	[0x035f] =  "呼叫恢复应答",
+	[0x0360] =  "一键转呼指令",
+	[0x0361] =  "一键转呼应答指令",
+
+}
+DevType = {
+	[0x00] = "未知设备",
+	[0x01] = "测试板",
+	[0x11] = "管理机",
+	[0x12] = "管理机",
+	[0x13] = "围墙机",
+	[0x14] = "联网刷卡头",
+	[0x15] = "IP摄像头",
+	[0x31] = "单元管理机",
+	[0x32] = "门口机",
+	[0x34] = "单元刷卡头",
+	[0x35] = "电梯联动模块",
+	[0x61] = "室内机",
+	[0x62] = "小门口机",
+}
+-------------------------Talkback通信协议----------------------------------------
+
+function Talkback.Communication.Protocol.dissector(buffer,pinfo,tree)
+
+
+end
+-------------------------Talkback音频协议----------------------------------------
+function Talkback.Audio.Protocol.dissector(buffer,pinfo,tree)
+
+
+end
+-------------------------Talkback视频协议----------------------------------------
+function Talkback.Video.Protocol.dissector(buffer,pinfo,tree)
+
+
+end
+-------------------------Talkback文件协议----------------------------------------
+function Talkback.File.Protocol.dissector(buffer,pinfo,tree)
+
+
+end
+
+
+
+
+-------------------------以下添加端口和协议-----------------------------------
 local udp_port_table = DissectorTable.get("udp.port")
-local port_produce = 10000
-udp_port_table:add(port_produce, vs_proto)
+udp_port_table:add(Produce.Port, Produce.Protocol)
+udp_port_table:add(Talkback.Communication.Port, Talkback.Communication.Protocol)
+udp_port_table:add(Talkback.Audio.Port, Talkback.Audio.Protocol)
+udp_port_table:add(Talkback.Video.Port, Talkback.Video.Protocol)
+udp_port_table:add(Talkback.File.Port, Talkback.File.Protocol)
+
