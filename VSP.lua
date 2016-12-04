@@ -1,9 +1,6 @@
 vs_proto = Proto ("VSP","Protocol for Video-Star","Protocol for Video-Star Building Intercom Sysytem")
-local f_produce_cid = ProtoField.uint32("id","id号 ",base.DEC)
---local f_produce_cmd = ProtoField.uint8("cmd","测试命令 ",base.HEX)
---local f_produce_cmd = ProtoField.uint("cmd","测试命令 ",base.DEC,{[0] = "TEST_CONNECT",[1] = "TEST_CONNECT_R"})
---[[
-local f_produce_cmd = ProtoField.uint("cmd","测试命令 ",base.DEC,{[0] = "TEST_CONNECT",				   	--进入/退出生产测试指令
+local f_produce_cid = ProtoField.uint32("produce_cid","id号 ",base.DEC)
+local f_produce_cmd = ProtoField.uint8("produce_cmd","测试命令 ",base.DEC,{[0] = "TEST_CONNECT",				   	--进入/退出生产测试指令
 	[1] = "TEST_CONNECT_R",		       	--进入/退出生产测试应答指令
 	[2] = "TEST_HW_VERSION",			   	--PCB硬件版本配置指令
 	[3] = "TEST_HW_VERSION_R",           	--PCB硬件版本配置应答指令
@@ -30,11 +27,10 @@ local f_produce_cmd = ProtoField.uint("cmd","测试命令 ",base.DEC,{[0] = "TES
     [24] = "TEST_CUSTOM_REPLY",           --执行自定义指令应答
     [25] = "TEST_SET_COMMON_TIMEOUT",		--设置指令超时时间ca
 	})
-]]--
-local f_produce_len = ProtoField.uint16("len","命令长度",base.DEC)
-local f_produce_code = ProtoField.string("Code","客户编号")
---vs_proto.fields = {f_produce_cid, f_produce_cmd, f_produce_len, f_produce_code}
-vs_proto.fields = {f_produce_cid, f_produce_len, f_produce_code}
+local f_produce_len = ProtoField.uint16("produce_len","命令长度",base.DEC)
+local f_produce_code = ProtoField.string("produce_Code","客户编号")
+vs_proto.fields = {f_produce_cid, f_produce_cmd, f_produce_len, f_produce_code}
+--vs_proto.fields = {f_produce_cid, f_produce_len, f_produce_code}
 
 function vs_proto.dissector(buffer,pinfo,tree)
     pinfo.cols.protocol:append("-VSP")
@@ -50,7 +46,7 @@ function vs_proto.dissector(buffer,pinfo,tree)
     offset = offset + 4
 	
 	local produce_cmd = buffer(offset,1):le_uint()
-	--VSPTree:add_le(f_produce_cmd, buffer(offset,1))	
+	VSPTree:add_le(f_produce_cmd, buffer(offset,1))	
 	offset = offset + 1
 		
 	VSPTree:add_le(f_produce_len, buffer(offset,2))
